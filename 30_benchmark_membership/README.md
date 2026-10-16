@@ -41,10 +41,13 @@ high-, low- and mixed-hit workloads (mixed = high- and low-hit reads interleaved
 timings are averages over 5 passes; every benchmark runs `REPEATS` times and the table reports
 medians.
 
-N is set at build time for all harnesses: `BENCH_NUM_QUERIES=1000000 scripts/build.sh`. The
-reference uses 1M; the default here is 100K, so that a run on a development dataset takes under
-a minute (`ecoli1`, 3 repeats: 45 s on an M-series Mac, vs about 5 min with 1M queries; the
-medians agree within a few percent).
+N is set per dataset (`num_queries` in `datasets.tsv`), passed to all harnesses as
+`$BENCH_NUM_QUERIES`; set it in the environment of `run.sh` to override (the reference uses 1M).
+The values are chosen so that a run takes about a minute per pass on a laptop. For example,
+`ecoli1` at 100K with 3 repeats takes 45 s, vs about 5 min at 1M, and the medians agree within
+a few percent. The pangenome uses 20K because its lookups are about 5× slower. Index builds
+are separate: `REUSE_INDEXES=1 scripts/run.sh <name>` reruns the benchmarks on the indexes of a
+previous run.
 
 ## Harnesses
 
@@ -93,7 +96,7 @@ every streaming workload.
 ## Layout
 
 ```
-datasets.tsv        name, k, m, genomes (comma-separated), high-/low-hit read sets
+datasets.tsv        name, k, m, genomes (comma-separated), high-/low-hit read sets, num_queries
 scripts/            build.sh, prepare_data.sh, run.sh, make_table.py, helpers
 src/, rust/         harnesses
 patches/            build-time patch of 01 (see above)
@@ -116,8 +119,30 @@ results/<name>/k<k>/  builds.tsv, raw.jsonl, table.md (committed); indexes, logs
   | ecoli1 | SRR9873306 (55% of k-mers found) | SRR5833294, human (0%) |
   | salmonella_enterica | SRR14373875 (80%) | SRR5833294, human (0%) |
 
-  These are too small for reliable streaming timings. Larger datasets and other values of k are
-  added as rows of `datasets.tsv`.
+  These are too small for reliable streaming timings.
+- **`ecoli_pangenome_661k_r0.1`.** A 10% k-mer subsample of the 661k E. coli pangenome
+  ([Zenodo 14722244](https://zenodo.org/records/14722244),
+  `ecoli_pangenome_661k_HQ.unitigs_k128_subsampled_k31_r0.1.fa.xz`, 534 MB). Download it into
+  `data/downloads/` before running `prepare_data.sh`:
+
+  ```bash
+  curl -L -o data/downloads/ecoli_pangenome_661k_HQ.unitigs_k128_subsampled_k31_r0.1.fa.xz \
+      'https://zenodo.org/records/14722244/files/ecoli_pangenome_661k_HQ.unitigs_k128_subsampled_k31_r0.1.fa.xz?download=1'
+  ```
+
+  The dataset has 55.1M 31-mers in 49.5M unitigs or simplitigs (1.54 Gbp), and a 475 Mbp
+  masked superstring. Subsampling leaves an extremely fragmented set, the opposite extreme of
+  the single genomes. Read sets are those of `ecoli1`: 9% of k-mers are found in the high-hit
+  set and 0.3% in the low-hit set. Preparation takes about 13 min on a laptop, mostly
+  KmerCamel, which is single-threaded and peaks at 2.2 GB. The 15 builds take about 8.5 min.
+- Larger datasets and other values of k are added as rows of `datasets.tsv`. Genomes may be
+  `.xz`: GGCAT cannot read xz and picks the format from the file extension, so
+  `prepare_data.sh` streams xz files through named FIFOs ending in `.fa`.
 - **GGCAT caveats.** `-s 1` is required: the default minimum multiplicity of 2 silently drops
   k-mers that occur once. GGCAT 2.2.0 non-unitig modes randomly abort with a huge allocation, so
-  `prepare_data.sh` retries them.
+  `prepare_data.sh` retries them. On the decompressed 2.3 GB pangenome file, GGCAT once hung (0%
+  CPU at the end of reads bucketing); the run through a FIFO did not.
+- **Memory.** Random lookups on indexes of about 1 GB are sensitive to memory pressure. On a
+  16 GB laptop with swap in use, pangenome lookup times varied by up to 90% between repeats,
+  while streaming, size and build numbers stayed stable. Benchmark on an otherwise idle machine
+  with enough RAM.

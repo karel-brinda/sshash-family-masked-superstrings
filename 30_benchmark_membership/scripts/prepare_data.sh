@@ -13,7 +13,7 @@ name=$1
 threads=${THREADS:-$(getconf _NPROCESSORS_ONLN)}
 row=$(awk -F'\t' -v n="$name" '$1 == n' datasets.tsv)
 [ -n "$row" ] || { echo "dataset '$name' not in datasets.tsv" >&2; exit 1; }
-IFS=$'\t' read -r _ k _ genomes high low <<< "$row"
+IFS=$'\t' read -r _ k _ genomes high low _ <<< "$row"
 IFS=',' read -r -a genomes <<< "$genomes"
 
 out=data/$name/k$k
@@ -24,7 +24,26 @@ run() { pixi run --frozen "$@"; }
 # the non-unitig modes defensively.
 # Bad output cannot slip through: count_kmers.py below checks the k-mer counts.
 retry() { for i in 1 2 3 4 5 6 7 8; do "$@" && return 0; echo "retry $i: $*" >&2; done; return 1; }
-ggcat() { run ggcat build -k "$k" -s 1 -j "$threads" -t "$out/ggcat_tmp" "$@" "${genomes[@]}"; }
+# GGCAT reads plain/gzip/lz4 files and picks the format from the file extension, so .xz inputs are
+# streamed through named FIFOs with a .fa extension (one per GGCAT run: a FIFO is read once).
+ggcat() {
+    local inputs=() fifos=() g i=0
+    for g in "${genomes[@]}"; do
+        if [[ $g == *.xz ]]; then
+            local fifo=$out/input.$((i++)).fa
+            rm -f "$fifo"; mkfifo "$fifo"; fifos+=("$fifo")
+            xz -dc -T0 "$g" > "$fifo" &
+            inputs+=("$fifo")
+        else
+            inputs+=("$g")
+        fi
+    done
+    local rc=0
+    run ggcat build -k "$k" -s 1 -j "$threads" -t "$out/ggcat_tmp" "$@" "${inputs[@]}" || rc=$?
+    for g in ${fifos[@]+"${fifos[@]}"}; do exec 3<> "$g"; exec 3>&-; rm -f "$g"; done  # unblock writers if unread
+    wait
+    return $rc
+}
 ggcat -o "$out/unitigs.fa"
 retry ggcat --simplitigs -o "$out/simplitigs.fa"
 rm -rf "$out/ggcat_tmp"

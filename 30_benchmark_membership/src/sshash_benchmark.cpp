@@ -11,7 +11,7 @@
     - v6 has a single indexing modality (k-mers are always matched on both strands), so
       dictionary::canonical() and the canonical/regular streaming_query variants are gone;
     - common.hpp is taken from 00_kmer_sets_benchmark/src.
-    Also, the number of queries is set at build time (BENCH_NUM_QUERIES, reference: 1M).
+    Also, the number of random queries is $BENCH_NUM_QUERIES (default: 1M, as in the reference).
 */
 
 #include <iostream>
@@ -23,13 +23,14 @@
 #include "sshash/src/info.cpp"
 
 #include "src/common.hpp"
+#include "num_queries.hpp"
 
 using namespace sshash;
 
 void perf_test_lookup_access(dictionary_type const& index, essentials::json_lines& perf_stats)  //
 {
     using kmer_t = typename dictionary_type::kmer_type;
-    constexpr uint64_t num_queries = BENCH_NUM_QUERIES;  // was 1'000'000; see CMakeLists.txt
+    const uint64_t num_queries = bench::num_queries();  // was constexpr 1'000'000
     constexpr uint64_t runs = 5;
     essentials::uniform_int_rng<uint64_t> distr(0, index.num_kmers() - 1,
                                                 essentials::get_random_seed());

@@ -19,6 +19,7 @@
 #include "include/gz/zip_stream.hpp"
 #include "include/query/streaming_query_canonical_parsing.hpp"
 #include "include/query/streaming_query_regular_parsing.hpp"
+#include "num_queries.hpp"
 
 using namespace sshash;
 
@@ -35,7 +36,7 @@ void random_kmer(char* kmer, uint64_t k) {
 void perf_test_lookup(dictionary const& index, std::string const& positive_queries_filename,
                       essentials::json_lines& perf_stats)  //
 {
-    constexpr uint64_t num_queries = BENCH_NUM_QUERIES;  // see CMakeLists.txt
+    const uint64_t num_queries = bench::num_queries();
     constexpr uint64_t runs = 5;
     const uint64_t k = index.k();
     std::string kmer(k, 0);

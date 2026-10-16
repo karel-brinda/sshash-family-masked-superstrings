@@ -6,10 +6,7 @@ cd "$(dirname "$0")/.."
 root=..
 jobs=${JOBS:-$(getconf _NPROCESSORS_ONLN)}
 
-# Number of random lookup / access queries of every harness (reference: 1000000).
-export BENCH_NUM_QUERIES=${BENCH_NUM_QUERIES:-100000}
-
-cmake -S . -B build -DCMAKE_BUILD_TYPE=Release -DBENCH_NUM_QUERIES=$BENCH_NUM_QUERIES
+cmake -S . -B build -DCMAKE_BUILD_TYPE=Release
 cmake --build build -j "$jobs"
 
 export RUSTFLAGS="${RUSTFLAGS:-} -C target-cpu=native"

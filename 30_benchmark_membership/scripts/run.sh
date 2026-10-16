@@ -10,7 +10,9 @@
 #   raw.jsonl      one JSON line per benchmark run (lookups, streaming high/low/mixed) and repetition
 #   queries.txt    the positive lookup queries shared by all tools
 #
-# usage: scripts/run.sh <name>      (env: REPEATS=3, THREADS=<all cores>, TOOLS="01 02 03 11 12 13")
+# usage: scripts/run.sh <name>      (env: REPEATS=3, THREADS=<all cores>, TOOLS="01 02 03 11 12 13",
+#                                    BENCH_NUM_QUERIES=<num_queries of datasets.tsv>,
+#                                    REUSE_INDEXES=1 to keep the indexes and builds.tsv of a previous run)
 set -euo pipefail
 cd "$(dirname "$0")/.."
 here=$PWD
@@ -20,7 +22,9 @@ threads=${THREADS:-$(getconf _NPROCESSORS_ONLN)}
 tools=${TOOLS:-"01 02 03 11 12 13"}
 row=$(awk -F'\t' -v n="$name" '$1 == n' datasets.tsv)
 [ -n "$row" ] || { echo "dataset '$name' not in datasets.tsv" >&2; exit 1; }
-IFS=$'\t' read -r _ k m _ <<< "$row"
+IFS=$'\t' read -r _ k m _ _ _ num_queries <<< "$row"
+# Random lookup / access queries per benchmark (reference: 1M), read by every harness.
+export BENCH_NUM_QUERIES=${BENCH_NUM_QUERIES:-$num_queries}
 
 data=$here/data/$name/k$k
 queries=$here/data/$name/queries
@@ -71,22 +75,24 @@ d.update(tool=sys.argv[1], input=sys.argv[2], workload=sys.argv[3], rep=int(sys.
 print(json.dumps(d))' "$tool" "$input" "$workload" "$rep" >> "$out/raw.jsonl"
 }
 
-printf 'tool\tinput\tbuild_s\tbuild_rss_kb\tindex_bytes\n' > "$out/builds.tsv"
 : > "$out/raw.jsonl"
 
-for tool in $tools; do
-    for input in $(inputs_of "$tool"); do
-        echo "[$(date +%T)] build $tool $input" >&2
-        build_index "$tool" "$input"
+if [ "${REUSE_INDEXES:-0}" = 1 ] && [ -s "$out/builds.tsv" ]; then
+    echo "reusing the indexes of $out" >&2
+else
+    printf 'tool\tinput\tbuild_s\tbuild_rss_kb\tindex_bytes\n' > "$out/builds.tsv"
+    for tool in $tools; do
+        for input in $(inputs_of "$tool"); do
+            echo "[$(date +%T)] build $tool $input" >&2
+            build_index "$tool" "$input"
+        done
     done
-done
+fi
 cp "$data/num_kmers.tsv" "$out/"
 
 # Shared positive queries: 1M k-mers sampled by the reference harness (02 on unitigs), half of
 # them reverse-complemented. 02/12 sample their own from the same distribution.
-if [ ! -s "$out/queries.txt" ]; then
-    (cd "$out/tmp" && "$bin/bench-02" -i "$(index_of 02 unitigs)" > /dev/null 2>&1 && mv queries.txt "$out/")
-fi
+(cd "$out/tmp" && "$bin/bench-02" -i "$(index_of 02 unitigs)" > /dev/null 2>&1 && mv queries.txt "$out/")
 
 for rep in $(seq 1 "$repeats"); do
     for tool in $tools; do

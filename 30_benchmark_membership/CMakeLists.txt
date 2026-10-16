@@ -25,10 +25,6 @@ endif ()
 add_compile_options(-ggdb -pthread -Wno-deprecated-declarations)
 add_link_options(-pthread)
 
-# Number of random lookup / access queries of every harness (reference: 1'000'000).
-set(BENCH_NUM_QUERIES 100000 CACHE STRING "Number of random queries per benchmark")
-add_compile_definitions(BENCH_NUM_QUERIES=${BENCH_NUM_QUERIES})
-
 find_package(ZLIB REQUIRED)
 
 set(ROOT ${CMAKE_CURRENT_SOURCE_DIR}/..)

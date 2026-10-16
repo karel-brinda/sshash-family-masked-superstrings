@@ -17,9 +17,9 @@ use flate2::read::MultiGzDecoder;
 use sshash_lib::streaming_query::StreamingQueryEngine;
 use sshash_lib::{Dictionary, Kmer, KmerBits};
 
-/// Set at build time by scripts/build.sh, like BENCH_NUM_QUERIES of the C++ harnesses.
+/// Number of random queries: $BENCH_NUM_QUERIES, or 1M as in the reference harness.
 fn num_queries() -> usize {
-    option_env!("BENCH_NUM_QUERIES").map_or(1_000_000, |n| n.parse().expect("BENCH_NUM_QUERIES"))
+    std::env::var("BENCH_NUM_QUERIES").map_or(1_000_000, |n| n.parse().expect("BENCH_NUM_QUERIES"))
 }
 const RUNS: usize = 5;
 

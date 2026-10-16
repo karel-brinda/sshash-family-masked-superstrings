@@ -1,3 +1,4 @@
-name	k	m	genomes	high_hit	low_hit
-ecoli1	31	15	../02_sshash/data/queries/ecoli1.fasta.gz	../01_sshash-lite/data/queries/SRR9873306_1.10K.fastq.gz	../01_sshash-lite/data/queries/SRR5833294.10K.fastq.gz
-salmonella_enterica	31	15	../02_sshash/data/queries/salmonella_enterica.fasta.gz	../01_sshash-lite/data/queries/SRR14373875_1.10K.fastq.gz	../01_sshash-lite/data/queries/SRR5833294.10K.fastq.gz
+name	k	m	genomes	high_hit	low_hit	num_queries
+ecoli1	31	15	../02_sshash/data/queries/ecoli1.fasta.gz	../01_sshash-lite/data/queries/SRR9873306_1.10K.fastq.gz	../01_sshash-lite/data/queries/SRR5833294.10K.fastq.gz	100000
+salmonella_enterica	31	15	../02_sshash/data/queries/salmonella_enterica.fasta.gz	../01_sshash-lite/data/queries/SRR14373875_1.10K.fastq.gz	../01_sshash-lite/data/queries/SRR5833294.10K.fastq.gz	100000
+ecoli_pangenome_661k_r0.1	31	17	data/downloads/ecoli_pangenome_661k_HQ.unitigs_k128_subsampled_k31_r0.1.fa.xz	../01_sshash-lite/data/queries/SRR9873306_1.10K.fastq.gz	../01_sshash-lite/data/queries/SRR5833294.10K.fastq.gz	20000
