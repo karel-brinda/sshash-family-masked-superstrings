@@ -1,0 +1,4 @@
+file	num_kmers	num_strings	num_bases
+data/salmonella_enterica/k31/unitigs.fa	4787534	1909	4844804
+data/salmonella_enterica/k31/simplitigs.fa	4787534	623	4806224
+data/salmonella_enterica/k31/ms.fa	4787534	1	4797195
