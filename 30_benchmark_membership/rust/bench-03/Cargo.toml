@@ -1,0 +1,21 @@
+# Rust port of the reference harness, linked against 03_sshash-rs (see ../src/main.rs).
+[package]
+name = "bench-03"
+version = "0.1.0"
+edition = "2024"
+publish = false
+
+[[bin]]
+name = "bench-03"
+path = "../src/main.rs"
+
+[dependencies]
+sshash-lib = { path = "../../../03_sshash-rs/crates/sshash-lib" }
+flate2 = "1"
+
+# Same as the release profile of 03_sshash-rs.
+[profile.release]
+lto = "thin"
+
+# Standalone: not part of the 03_sshash-rs workspace.
+[workspace]

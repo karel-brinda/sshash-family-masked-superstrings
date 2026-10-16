@@ -1,0 +1,4 @@
+file	num_kmers	num_strings	num_bases
+data/ecoli1/k31/unitigs.fa	4877400	1352	4917960
+data/ecoli1/k31/simplitigs.fa	4877400	457	4891110
+data/ecoli1/k31/ms.fa	4877400	1	4884204

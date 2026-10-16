@@ -12,6 +12,13 @@ Supplementary repository: original SSHash-family tools and their masked-superstr
 git clone --recursive https://github.com/karel-brinda/sshash-family-masked-superstrings
 ```
 
+Benchmarks:
+
+| Dir | Content |
+|---|---|
+| [`00_kmer_sets_benchmark`](https://github.com/jermp/kmer_sets_benchmark) | reference benchmark methodology and harness (submodule) |
+| [`30_benchmark_membership`](30_benchmark_membership) | membership benchmark of `0x` vs `1x` on unitigs, simplitigs and masked superstrings |
+
 ## Modifications
 
 ### 11_sshash-lite-bigreedy-ms
