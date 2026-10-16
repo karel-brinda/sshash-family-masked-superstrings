@@ -1,0 +1,18 @@
+[submodule "01_sshash-lite"]
+	path = 01_sshash-lite
+	url = https://github.com/jermp/sshash-lite
+[submodule "02_sshash"]
+	path = 02_sshash
+	url = https://github.com/jermp/sshash
+[submodule "03_sshash-rs"]
+	path = 03_sshash-rs
+	url = https://github.com/COMBINE-lab/sshash-rs
+[submodule "11_sshash-lite-bigreedy-ms"]
+	path = 11_sshash-lite-bigreedy-ms
+	url = https://github.com/karel-brinda/sshash-lite-bigreedy-ms
+[submodule "12_sshash-bigreedy-ms"]
+	path = 12_sshash-bigreedy-ms
+	url = https://github.com/karel-brinda/sshash-bigreedy-ms
+[submodule "13_sshash-rs-bigreedy-ms"]
+	path = 13_sshash-rs-bigreedy-ms
+	url = https://github.com/karel-brinda/sshash-rs-bigreedy-ms
