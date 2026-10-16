@@ -48,8 +48,6 @@ git submodule status --recursive
 
 ## Per-tool notes
 
-<!-- To be backfilled: build instructions, CLI usage, design notes, benchmarks, gotchas. -->
-
 ### 11_sshash-lite-bigreedy-ms
 
 C++ fork of jermp/sshash-lite (membership-only SSHash; a 2022-era codebase that predates `02`'s
