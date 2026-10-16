@@ -16,7 +16,39 @@ git clone --recursive https://github.com/karel-brinda/sshash-family-masked-super
 
 ### 11_sshash-lite-bigreedy-ms
 
-TODO
+A fork of [SSHash-Lite](https://github.com/jermp/sshash-lite) (C++; the membership-only version
+of SSHash) extended to index BiGreedy masked superstrings, as output by
+[KmerCamel](https://github.com/ondrejsladky/kmercamel), directly: the k-mer set is stored as one
+superstring instead of a set of strings, and membership queries answer exactly over the
+represented k-mers.
+
+- **New (default) input format.** A KmerCamel-style masked superstring: a single unwrapped FASTA
+  record where an uppercase base marks the start of a represented k-mer. The case mask is
+  consumed during construction: the maximal uppercase runs — the embedded maximal simplitigs,
+  stored as possibly overlapping intervals of the one superstring — take the place of the input
+  sequences, and only their k-mers are indexed, so unrepresented (junction) k-mers never match.
+  The mask itself is not stored. The original one-sequence-per-line input of SSHash-Lite
+  (unitigs, or matchtigs with duplicate k-mers) remains available via `--spss`, and
+  `--intervals <tsv>` indexes explicitly listed embedding intervals instead of a case mask.
+
+      kmercamel compute -k 31 -S -o bigreedy.msfa unitigs.fa
+      ./sshash-lite-bigreedy-ms build bigreedy.msfa 31 15 --canonical-parsing --check -d tmp -o bigreedy.sshash
+      ./sshash-lite-bigreedy-ms query bigreedy.sshash reads.fastq.gz -t 0.8
+
+  A query read is reported positive if at least a fraction `-t` of its k-mers is found.
+  KmerCamel's default reverse-complement handling corresponds to `--canonical-parsing`;
+  `kmercamel -u` corresponds to regular parsing. The full pipeline is reproducible on the
+  bundled *E. coli* data via `cd tests/integration && make` (requires `kmercamel` on `PATH`).
+
+- **Caveats.** The mask is expected to be **min-one** (KmerCamel's default output: each
+  represented k-mer is marked exactly once). Masks marking a k-mer more than once (e.g.,
+  max-one) are not supported: although membership semantics itself tolerates duplicates,
+  duplicate keys can make the PTHash skew-index construction fail or hang. `kmercamel compute
+  -S` must be fed a repetition-free SPSS (unitigs or simplitigs, not matchtigs). Because the
+  masked superstring is the default input, a plain single-record FASTA containing lowercase
+  (e.g., soft-masked) bases would be silently misread as a mask — pass `--spss` for ordinary
+  sequences. Query reports classify each read with an early exit against `-t`, so the per-k-mer
+  counters are decision counters, not exhaustive counts.
 
 ### 12_sshash-bigreedy-ms
 
