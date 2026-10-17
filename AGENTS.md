@@ -13,12 +13,15 @@ Supplementary repository for a paper. It pins the SSHash-family tools and their 
 | `12_sshash-bigreedy-ms` | karel-brinda/sshash-bigreedy-ms | modified | `master` | `02` (jermp/sshash `master`) |
 | `13_sshash-rs-bigreedy-ms` | karel-brinda/sshash-rs-bigreedy-ms | modified | `main` | `03` (COMBINE-lab/sshash-rs `main`) |
 
-Numbering: `0x` = original, `1x` = modification of `0x`. The pinned `0x` commit should be the fork point (merge base) of the corresponding `1x`.
+| `00_kmer_sets_benchmark` | jermp/kmer_sets_benchmark | reference benchmark | `main` | – |
+| `30_benchmark_membership` | (this repo) | membership benchmark of `0x` vs `1x` | – | – |
+
+Numbering: `0x` = original, `1x` = modification of `0x`. The pinned `0x` commit should be the fork point (merge base) of the corresponding `1x`. `00` is the reference benchmark (only its `src/sshash_benchmark.cpp` and `src/common.hpp` are used; its nested submodules are not needed); `3x` are benchmarks in this repo. See `30_benchmark_membership/README.md`, in particular: the SSHash harness there is a v6-adapted copy of `00`'s (diff it after bumping `00`), and `01` is built from a copy patched with `11`'s PTHash stabilization.
 
 ## Rules
 
 - Submodules are pinned to **exact commits**. `.gitmodules` has no `branch =` entries, so do not rely on `git submodule update --remote`.
-- Never modify `01`–`03`. They only move when deliberately bumped to a new upstream commit.
+- Never modify `00`–`03`. They only move when deliberately bumped to a new upstream commit.
 - Make code changes only inside `11`–`13`: commit and push in the submodule first, then commit the updated pointer in this repo. Never commit a pointer to a commit that hasn't been pushed.
 - `.gitmodules` uses public HTTPS URLs (for readers of the paper). For pushing, set a local SSH push URL in each `1x` (not committed):
   `git -C 1x_... remote set-url --push origin git@github.com:karel-brinda/<repo>.git`

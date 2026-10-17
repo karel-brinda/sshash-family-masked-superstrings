@@ -1,0 +1,10 @@
+[workspace]
+name = "benchmark-membership"
+channels = ["conda-forge", "bioconda"]
+platforms = ["osx-arm64", "linux-64"]
+
+[dependencies]
+ggcat = "2.2.*"
+kmercamel = "2.3.1.*"
+python = "3.12.*"
+zlib = "*"

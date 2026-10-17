@@ -1,0 +1,43 @@
+# PTHash stabilization of 11_sshash-lite-bigreedy-ms (commits 59fb520, 1bbe68f), applied to a
+# build-time copy of 01_sshash-lite so that 01 and 11 are constructed identically (see README).
+diff --git a/include/minimizers.hpp b/include/minimizers.hpp
+index 9079031..ced84ef 100644
+--- a/include/minimizers.hpp
++++ b/include/minimizers.hpp
+@@ -11,12 +11,12 @@ struct minimizers {
+         pthash::build_configuration mphf_config;
+         mphf_config.c = 6.0;
+         mphf_config.alpha = 0.94;
+-        mphf_config.seed = 1234567890;  // my favourite seed
++        // Keep construction deterministic and independent of the minimizer seed.
++        mphf_config.seed = 42;
+         mphf_config.minimal_output = true;
+         mphf_config.verbose_output = false;
++        // PTHash's external-memory parallel path is not reliable on this target.
+         mphf_config.num_threads = 1;
+-        uint64_t num_threads = std::thread::hardware_concurrency() >= 8 ? 8 : 1;
+-        if (size >= num_threads) mphf_config.num_threads = num_threads;
+         mphf_config.ram = 2 * essentials::GB;
+         mphf_config.tmp_dir = build_config.tmp_dirname;
+         m_mphf.build_in_external_memory(begin, size, mphf_config);
+@@ -39,4 +39,4 @@ private:
+     pthash_mphf_type m_mphf;
+ };
+ 
+-}  // namespace sshash
+\ No newline at end of file
++}  // namespace sshash
+diff --git a/include/builder/build_skew_index.hpp b/include/builder/build_skew_index.hpp
+index 19d414e..2d7df80 100644
+--- a/include/builder/build_skew_index.hpp
++++ b/include/builder/build_skew_index.hpp
+@@ -150,7 +150,8 @@ void build_skew_index(skew_index& m_skew_index, parse_data& data, buckets const&
+         mphf_config.seed = 1234567890;  // my favourite seed
+         mphf_config.minimal_output = true;
+         mphf_config.verbose_output = false;
+-        mphf_config.num_threads = std::thread::hardware_concurrency() >= 8 ? 8 : 1;
++        // PTHash's parallel path is not reliable on this target (cf. minimizers.hpp).
++        mphf_config.num_threads = 1;
+ 
+         std::cout << "building PTHash mphfs (with " << mphf_config.num_threads
+                   << " threads) and positions..." << std::endl;
