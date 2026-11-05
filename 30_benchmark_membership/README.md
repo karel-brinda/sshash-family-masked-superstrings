@@ -157,7 +157,7 @@ results/<name>/k<k>/  builds.tsv, raw.jsonl, table.md (committed); indexes, logs
   masked superstring. Subsampling leaves an extremely fragmented set, the opposite extreme of
   the single genomes. Read sets are those of `ecoli1`: 9% of k-mers are found in the high-hit
   set and 0.3% in the low-hit set. Preparation takes about 13 min on a laptop, mostly
-  KmerCamel, which is single-threaded and peaks at 2.2 GB. The 15 builds take about 8.5 min.
+  KmerCamel, which is single-threaded and peaks at 2.2 GB. The 15 builds of `01`–`03` and `11`–`13` take about 8.5 min.
 - Larger datasets and other values of k are added as rows of `datasets.tsv`. Genomes may be
   `.xz`: GGCAT cannot read xz and picks the format from the file extension, so
   `prepare_data.sh` streams xz files through named FIFOs ending in `.fa`.

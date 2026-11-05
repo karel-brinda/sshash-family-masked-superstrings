@@ -5,8 +5,15 @@ Supplementary repository: original SSHash-family tools and their masked-superstr
 | Original | Modified |
 |---|---|
 | [`01_sshash-lite`](https://github.com/jermp/sshash-lite) | [`11_sshash-lite-bigreedy-ms`](https://github.com/karel-brinda/sshash-lite-bigreedy-ms) |
-| [`02_sshash`](https://github.com/jermp/sshash) | [`12_sshash-bigreedy-ms`](https://github.com/karel-brinda/sshash-bigreedy-ms) |
+| [`02_sshash`](https://github.com/jermp/sshash) (v6, current) | [`12_sshash-bigreedy-ms`](https://github.com/karel-brinda/sshash-bigreedy-ms) |
 | [`03_sshash-rs`](https://github.com/COMBINE-lab/sshash-rs) | [`13_sshash-rs-bigreedy-ms`](https://github.com/karel-brinda/sshash-rs-bigreedy-ms) |
+| [`04_sshash-v3`](https://github.com/jermp/sshash/tree/v3.0.0) (v3.0.0, 2022) | [`14_sshash-v3-bigreedy-ms`](https://github.com/karel-brinda/sshash-bigreedy-ms/tree/v3-ms) |
+| [`05_sshash-v4`](https://github.com/jermp/sshash/tree/v4.0.0) (v4.0.0, 2025) | [`15_sshash-v4-bigreedy-ms`](https://github.com/karel-brinda/sshash-bigreedy-ms/tree/v4-ms) |
+
+SSHash is included in three versions because the gain from masked superstrings depends on the
+index design: v3 is the design of the Bioinformatics paper (2022) with streaming queries added,
+v4 the first version with minimizer-position offsets (2025), and v6 the current, heavily
+optimized one.
 
 ```bash
 git clone --recursive https://github.com/karel-brinda/sshash-family-masked-superstrings
@@ -113,3 +120,45 @@ the design is implementation-independent: both implementations assign identical 
 - **Caveats.** As in `12`: the mask must be **min-one** (KmerCamel's default) and non-min-one
   masks are not detected during construction — run `check --masked-superstring` when the mask
   provenance is uncertain. Weighted dictionaries are not supported with masked superstrings.
+
+### 14_sshash-v3-bigreedy-ms
+
+Branch [`v3-ms`](https://github.com/karel-brinda/sshash-bigreedy-ms/tree/v3-ms) of the `12`
+repository: [SSHash v3.0.0](https://github.com/jermp/sshash/tree/v3.0.0), the 2022 design of the
+Bioinformatics paper, extended to natively index BiGreedy masked superstrings with the full
+dictionary interface. The 2022 code base is the one SSHash-Lite was derived from, so the design
+follows `11`, with k-mer ids added.
+
+- **Same input and semantics as `12`.** `--masked-superstring`, min-one masks, k-mer ids = ranks
+  of the uppercase positions in text order.
+
+      kmercamel compute -k 31 -o out.msfa input.fa
+      ./build out.msfa 31 16 --canonical-parsing --masked-superstring --check -o out.sshash
+
+- **Lighter layout than `12`.** The superstring is stored once; the interval ends are stored
+  where v3 stores the string endpoints, plus one Elias–Fano sequence of cumulative k-mer counts,
+  from which the interval begins and the ids are derived. No offset encoding is needed: v3
+  stores super-k-mer starts, which never coincide across intervals, and the interval of an
+  offset is the one with the smallest end ≥ offset + k. The extra sequence exists only for
+  masked-superstring input, so plain SPSS inputs are indexed exactly as upstream.
+- **Build fixes for macOS/ARM** (not specific to masked superstrings): PTHash bumped to its
+  non-x86 fallbacks, single-threaded PTHash with a fixed seed (as in `11`), C++20.
+- **Caveats.** As in `12` (min-one, not detected during construction: use `--check`;
+  `--weighted` unsupported; index files not interchangeable with upstream). Like upstream v3,
+  construction can fail with *"Empty bucket detected"*, depending on the seed: pass another
+  `-s`.
+
+### 15_sshash-v4-bigreedy-ms
+
+Branch [`v4-ms`](https://github.com/karel-brinda/sshash-bigreedy-ms/tree/v4-ms) of the `12`
+repository: [SSHash v4.0.0](https://github.com/jermp/sshash/tree/v4.0.0), the first version with
+minimizer-position offsets, extended with the layout of `14`.
+
+      kmercamel compute -k 31 -o out.msfa input.fa
+      ./sshash build -i out.msfa -k 31 -m 16 --canonical --masked-superstring --check -o out.sshash
+
+- **No offset encoding, unlike `12`.** v4 derives the k-mer offset from the query and its
+  minimizer position, so a minimizer position shared by two overlapping intervals is harmless:
+  the k-mer is represented if and only if it starts within the interval with the smallest end
+  ≥ offset + k. Plain SPSS inputs are indexed exactly as upstream.
+- **Caveats.** As in `14`, without the build fixes and the seed issue.
