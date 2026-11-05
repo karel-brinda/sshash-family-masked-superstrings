@@ -16,3 +16,6 @@
 [submodule "13_sshash-rs-bigreedy-ms"]
 	path = 13_sshash-rs-bigreedy-ms
 	url = https://github.com/karel-brinda/sshash-rs-bigreedy-ms
+[submodule "00_kmer_sets_benchmark"]
+	path = 00_kmer_sets_benchmark
+	url = https://github.com/jermp/kmer_sets_benchmark

@@ -1,0 +1,7 @@
+build/
+data/
+results/*/*/indexes/
+results/*/*/logs/
+results/*/*/tmp/
+results/*/*/queries.txt
+.pixi/

@@ -1,0 +1,4 @@
+file	num_kmers	num_strings	num_bases
+data/ecoli_pangenome_661k_r0.1/k31/unitigs.fa	55095014	49492442	1539868274
+data/ecoli_pangenome_661k_r0.1/k31/simplitigs.fa	55095014	49454746	1538737394
+data/ecoli_pangenome_661k_r0.1/k31/ms.fa	55095014	1	474975646
