@@ -1,5 +1,5 @@
 /*
-    SSHash-Lite (01_sshash-lite / 11_sshash-lite-bigreedy-ms) port of the reference harness
+    SSHash-Lite (02_sshash-lite / 12_sshash-lite-bigreedy-ms) port of the reference harness
     00_kmer_sets_benchmark/src/sshash_benchmark.cpp: same loops, constants, timers and output keys.
 
     Differences, all forced by SSHash-Lite being a membership-only dictionary:

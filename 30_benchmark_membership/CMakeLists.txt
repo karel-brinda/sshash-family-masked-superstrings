@@ -4,16 +4,16 @@ project(BENCHMARK_MEMBERSHIP LANGUAGES CXX)
 # Every tool of the SSHash family is compiled here from its submodule sources with the same
 # compiler and flags, so that 0x vs 1x differences reflect code, not build settings.
 #
-#   sshash-lite-01, sshash-lite-11     build/query CLIs of 01_sshash-lite / 11_sshash-lite-bigreedy-ms
-#   sshash-02, sshash-12               CLI of 02_sshash / 12_sshash-bigreedy-ms (SSHash v6)
-#   sshash-04-*, sshash-14-*           build/query CLIs of 04_sshash-v3 / 14_sshash-v3-bigreedy-ms
-#   sshash-05, sshash-15               CLI of 05_sshash-v4 / 15_sshash-v4-bigreedy-ms
-#   bench-01, bench-11                 src/sshash_lite_benchmark.cpp (port of the reference harness)
-#   bench-02, bench-12                 src/sshash_benchmark.cpp (reference harness, v6 API)
-#   bench-04, bench-14                 src/sshash_v3_benchmark.cpp (port of the reference harness)
-#   bench-05, bench-15                 src/sshash_v4_benchmark.cpp (reference harness, v4 API)
+#   sshash-01-*, sshash-11-*           build/query CLIs of 01_sshash-v3 / 11_sshash-v3-bigreedy-ms
+#   sshash-lite-02, sshash-lite-12     build/query CLIs of 02_sshash-lite / 12_sshash-lite-bigreedy-ms
+#   sshash-03, sshash-13               CLI of 03_sshash-v4 / 13_sshash-v4-bigreedy-ms
+#   sshash-04, sshash-14               CLI of 04_sshash-v6 / 14_sshash-v6-bigreedy-ms (SSHash v6)
+#   bench-01, bench-11                 src/sshash_v3_benchmark.cpp (port of the reference harness)
+#   bench-02, bench-12                 src/sshash_lite_benchmark.cpp (port of the reference harness)
+#   bench-03, bench-13                 src/sshash_v4_benchmark.cpp (reference harness, v4 API)
+#   bench-04, bench-14                 src/sshash_benchmark.cpp (reference harness, v6 API)
 #
-# The Rust tools (03, 13) are built by rust/ (see README.md).
+# The Rust tools (05, 15) are built by rust/ (see README.md).
 
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 if (NOT CMAKE_BUILD_TYPE)
@@ -34,7 +34,7 @@ find_package(ZLIB REQUIRED)
 set(ROOT ${CMAKE_CURRENT_SOURCE_DIR}/..)
 set(REF ${ROOT}/00_kmer_sets_benchmark)
 
-# --- SSHash v6 (02, 12) and v4 (05, 15) -------------------------------------------------------
+# --- SSHash v6 (04, 14) and v4 (03, 13) -------------------------------------------------------
 
 # add_sshash(<id> <dir> <harness> <library sources...>): the two versions differ only in their
 # source layout and in the API adaptations of their harness.
@@ -73,41 +73,41 @@ set(SOURCES_V6 external/gz/zip_stream.cpp external/cityhash/cityhash.cpp src/bui
                src/dictionary.cpp src/query.cpp src/info.cpp)
 set(SOURCES_V4 external/gz/zip_stream.cpp src/build.cpp src/dictionary.cpp src/query.cpp
                src/info.cpp src/statistics.cpp)
-add_sshash(02 02_sshash src/sshash_benchmark.cpp ${SOURCES_V6})
-add_sshash(12 12_sshash-bigreedy-ms src/sshash_benchmark.cpp ${SOURCES_V6})
-add_sshash(05 05_sshash-v4 src/sshash_v4_benchmark.cpp ${SOURCES_V4})
-add_sshash(15 15_sshash-v4-bigreedy-ms src/sshash_v4_benchmark.cpp ${SOURCES_V4})
+add_sshash(04 04_sshash-v6 src/sshash_benchmark.cpp ${SOURCES_V6})
+add_sshash(14 14_sshash-v6-bigreedy-ms src/sshash_benchmark.cpp ${SOURCES_V6})
+add_sshash(03 03_sshash-v4 src/sshash_v4_benchmark.cpp ${SOURCES_V4})
+add_sshash(13 13_sshash-v4-bigreedy-ms src/sshash_v4_benchmark.cpp ${SOURCES_V4})
 
-# --- SSHash v3 (04, 14) ------------------------------------------------------------------------
+# --- SSHash v3 (01, 11) ------------------------------------------------------------------------
 
-# v3.0.0 (2022) needs two fixes to build and run on macOS/ARM, carried as commits by 14 and applied
-# here to a build-time copy of 04 (the submodule is untouched), so that 04 and 14 differ only in
+# v3.0.0 (2022) needs two fixes to build and run on macOS/ARM, carried as commits by 11 and applied
+# here to a build-time copy of 01 (the submodule is untouched), so that 01 and 11 differ only in
 # the masked-superstring feature:
-#   patches/04-pthash-portability.patch   PTHash e12ce2f..5da0377 (non-x86 fallbacks)
-#   patches/01-pthash-stabilization.patch the PTHash stabilization of 01/11 (v3 and SSHash-Lite
+#   patches/pthash-portability.patch   PTHash e12ce2f..5da0377 (non-x86 fallbacks)
+#   patches/pthash-stabilization.patch the PTHash stabilization of 02/12 (v3 and SSHash-Lite
 #                                         share this code; the patch applies verbatim)
 # and C++20 (std::popcount in the PTHash fallbacks, as for SSHash-Lite).
-set(SRC04 ${CMAKE_BINARY_DIR}/04_sshash-v3-patched)
-set(PATCHES04 ${CMAKE_CURRENT_SOURCE_DIR}/patches/04-pthash-portability.patch
-              ${CMAKE_CURRENT_SOURCE_DIR}/patches/01-pthash-stabilization.patch)
-set(stale04 FALSE)
-foreach (patch ${PATCHES04})
-    if (NOT EXISTS ${SRC04}/.patched OR ${patch} IS_NEWER_THAN ${SRC04}/.patched)
-        set(stale04 TRUE)
+set(SRC_V3 ${CMAKE_BINARY_DIR}/sshash-v3-patched)
+set(PATCHES_V3 ${CMAKE_CURRENT_SOURCE_DIR}/patches/pthash-portability.patch
+              ${CMAKE_CURRENT_SOURCE_DIR}/patches/pthash-stabilization.patch)
+set(STALE_V3 FALSE)
+foreach (patch ${PATCHES_V3})
+    if (NOT EXISTS ${SRC_V3}/.patched OR ${patch} IS_NEWER_THAN ${SRC_V3}/.patched)
+        set(STALE_V3 TRUE)
     endif ()
 endforeach ()
-if (stale04)
-    file(REMOVE_RECURSE ${SRC04})
-    file(MAKE_DIRECTORY ${SRC04})
-    file(COPY ${ROOT}/04_sshash-v3/include ${ROOT}/04_sshash-v3/src ${ROOT}/04_sshash-v3/external
-         DESTINATION ${SRC04} PATTERN .git EXCLUDE)
-    foreach (patch ${PATCHES04})
-        execute_process(COMMAND patch -p1 -i ${patch} WORKING_DIRECTORY ${SRC04} RESULT_VARIABLE rc)
+if (STALE_V3)
+    file(REMOVE_RECURSE ${SRC_V3})
+    file(MAKE_DIRECTORY ${SRC_V3})
+    file(COPY ${ROOT}/01_sshash-v3/include ${ROOT}/01_sshash-v3/src ${ROOT}/01_sshash-v3/external
+         DESTINATION ${SRC_V3} PATTERN .git EXCLUDE)
+    foreach (patch ${PATCHES_V3})
+        execute_process(COMMAND patch -p1 -i ${patch} WORKING_DIRECTORY ${SRC_V3} RESULT_VARIABLE rc)
         if (NOT rc EQUAL 0)
             message(FATAL_ERROR "cannot apply ${patch}")
         endif ()
     endforeach ()
-    file(TOUCH ${SRC04}/.patched)
+    file(TOUCH ${SRC_V3}/.patched)
 endif ()
 
 function(add_sshash_v3 id src)
@@ -129,32 +129,32 @@ function(add_sshash_v3 id src)
     target_link_libraries(bench-${id} PRIVATE sshash_static_${id})
 endfunction()
 
-add_sshash_v3(04 ${SRC04})
-add_sshash_v3(14 ${ROOT}/14_sshash-v3-bigreedy-ms)
+add_sshash_v3(01 ${SRC_V3})
+add_sshash_v3(11 ${ROOT}/11_sshash-v3-bigreedy-ms)
 
-# --- SSHash-Lite (01, 11) ----------------------------------------------------------------------
+# --- SSHash-Lite (02, 12) ----------------------------------------------------------------------
 
-# 01 is built from a copy patched with the PTHash stabilization of 11 (single-threaded, fixed
-# seed): without it 01 does not build reliably on macOS/ARM, and with it 01 and 11 differ only in
-# the masked-superstring feature. See patches/01-pthash-stabilization.patch.
-option(BENCH_STABILIZE_01 "Build 01 with the PTHash stabilization of 11" ON)
-if (BENCH_STABILIZE_01)
-    set(SRC01 ${CMAKE_BINARY_DIR}/01_sshash-lite-stabilized)
-    set(PATCH01 ${CMAKE_CURRENT_SOURCE_DIR}/patches/01-pthash-stabilization.patch)
-    if (NOT EXISTS ${SRC01}/.patched OR ${PATCH01} IS_NEWER_THAN ${SRC01}/.patched)
-        file(REMOVE_RECURSE ${SRC01})
-        file(MAKE_DIRECTORY ${SRC01})
-        file(COPY ${ROOT}/01_sshash-lite/include ${ROOT}/01_sshash-lite/src DESTINATION ${SRC01})
-        file(CREATE_LINK ${ROOT}/01_sshash-lite/external ${SRC01}/external SYMBOLIC)
-        execute_process(COMMAND patch -p1 -i ${PATCH01} WORKING_DIRECTORY ${SRC01}
+# 02 is built from a copy patched with the PTHash stabilization of 12 (single-threaded, fixed
+# seed): without it 02 does not build reliably on macOS/ARM, and with it 02 and 12 differ only in
+# the masked-superstring feature. See patches/pthash-stabilization.patch.
+option(BENCH_STABILIZE_LITE "Build 02 with the PTHash stabilization of 12" ON)
+if (BENCH_STABILIZE_LITE)
+    set(SRC_LITE ${CMAKE_BINARY_DIR}/sshash-lite-stabilized)
+    set(PATCH_LITE ${CMAKE_CURRENT_SOURCE_DIR}/patches/pthash-stabilization.patch)
+    if (NOT EXISTS ${SRC_LITE}/.patched OR ${PATCH_LITE} IS_NEWER_THAN ${SRC_LITE}/.patched)
+        file(REMOVE_RECURSE ${SRC_LITE})
+        file(MAKE_DIRECTORY ${SRC_LITE})
+        file(COPY ${ROOT}/02_sshash-lite/include ${ROOT}/02_sshash-lite/src DESTINATION ${SRC_LITE})
+        file(CREATE_LINK ${ROOT}/02_sshash-lite/external ${SRC_LITE}/external SYMBOLIC)
+        execute_process(COMMAND patch -p1 -i ${PATCH_LITE} WORKING_DIRECTORY ${SRC_LITE}
                         RESULT_VARIABLE rc)
         if (NOT rc EQUAL 0)
-            message(FATAL_ERROR "cannot apply ${PATCH01}")
+            message(FATAL_ERROR "cannot apply ${PATCH_LITE}")
         endif ()
-        file(TOUCH ${SRC01}/.patched)
+        file(TOUCH ${SRC_LITE}/.patched)
     endif ()
 else ()
-    set(SRC01 ${ROOT}/01_sshash-lite)
+    set(SRC_LITE ${ROOT}/02_sshash-lite)
 endif ()
 
 function(add_sshash_lite id src cli std)
@@ -175,5 +175,5 @@ function(add_sshash_lite id src cli std)
     target_link_libraries(bench-${id} PRIVATE sshashlite_static_${id})
 endfunction()
 
-add_sshash_lite(01 ${SRC01} sshash-lite 20)  # C++20: std::popcount in PTHash on non-x86
-add_sshash_lite(11 ${ROOT}/11_sshash-lite-bigreedy-ms sshash-lite-bigreedy-ms 20)
+add_sshash_lite(02 ${SRC_LITE} sshash-lite 20)  # C++20: std::popcount in PTHash on non-x86
+add_sshash_lite(12 ${ROOT}/12_sshash-lite-bigreedy-ms sshash-lite-bigreedy-ms 20)

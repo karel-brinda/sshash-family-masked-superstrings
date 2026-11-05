@@ -1,6 +1,6 @@
 /*
     Copy of the reference harness 00_kmer_sets_benchmark/src/sshash_benchmark.cpp, adapted to the
-    SSHash v6 API of 02_sshash / 12_sshash-bigreedy-ms (CMake exposes either tree as "sshash/").
+    SSHash v6 API of 04_sshash-v6 / 14_sshash-v6-bigreedy-ms (CMake exposes either tree as "sshash/").
     The benchmark code itself is unchanged. To see the adaptations, or what changed upstream after
     a submodule bump:
 

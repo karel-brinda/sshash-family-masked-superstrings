@@ -11,9 +11,9 @@ Two questions:
 2. **Masked superstrings:** `1x` on the BiGreedy masked superstring vs `0x` on simplitigs.
 
 SSHash is benchmarked in three versions, since the gain from masked superstrings depends on the
-index design: v3 (`04`/`14`, 2022: the design of the Bioinformatics paper, plus streaming
-queries; super-k-mer offsets), v4 (`05`/`15`, 2025: minimizer-position offsets, before the v5/v6
-optimizations) and v6 (`02`/`12`, current). SSHash-Lite (`01`/`11`) is a membership-only
+index design: v3 (`01`/`11`, 2022: the design of the Bioinformatics paper, plus streaming
+queries; super-k-mer offsets), v4 (`03`/`13`, 2025: minimizer-position offsets, before the v5/v6
+optimizations) and v6 (`04`/`14`, current). SSHash-Lite (`02`/`12`) is a membership-only
 derivative of the 2022 design.
 
 ## Quick start
@@ -26,16 +26,16 @@ scripts/run.sh ecoli1             # indexes, benchmarks, table -> results/ecoli1
 ```
 
 `run.sh` takes `REPEATS` (default 3), `THREADS` (build threads, default all cores) and `TOOLS`
-(default `01 04 05 02 03 11 14 15 12 13`). Requires CMake, a C++20 compiler, zlib, Rust ≥ 1.88 and GNU time
+(default `01 02 03 04 05 11 12 13 14 15`). Requires CMake, a C++20 compiler, zlib, Rust ≥ 1.88 and GNU time
 (`gtime` on macOS: `brew install gnu-time`).
 
 ## Matrix
 
-| Input | `01` | `11` | `04` | `14` | `05` | `15` | `02` | `12` | `03` | `13` |
+| Input | `01` | `11` | `02` | `12` | `03` | `13` | `04` | `14` | `05` | `15` |
 |---|---|---|---|---|---|---|---|---|---|---|
-| unitigs (GGCAT) | ✓ | ✓ `--spss` | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
-| simplitigs (GGCAT `--simplitigs`) | ✓ | ✓ `--spss` | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
-| BiGreedy masked superstring (KmerCamel, min-one) | – | ✓ | – | ✓ `--masked-superstring` | – | ✓ `--masked-superstring` | – | ✓ `--masked-superstring` | – | ✓ `--masked-superstring` |
+| unitigs (GGCAT) | ✓ | ✓ | ✓ | ✓ `--spss` | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
+| simplitigs (GGCAT `--simplitigs`) | ✓ | ✓ | ✓ | ✓ `--spss` | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
+| BiGreedy masked superstring (KmerCamel, min-one) | – | ✓ `--masked-superstring` | – | ✓ | – | ✓ `--masked-superstring` | – | ✓ `--masked-superstring` | – | ✓ `--masked-superstring` |
 
 All indexes are built with the same `k`, `m` (per dataset, in `datasets.tsv`) and both strands
 (`--canonical-parsing` for SSHash-Lite and SSHash v3, `--canonical` for SSHash v4; SSHash v6 and
@@ -60,11 +60,11 @@ previous run.
 
 | Tools | Harness | Relation to the reference |
 |---|---|---|
-| `02`, `12` | [`src/sshash_benchmark.cpp`](src/sshash_benchmark.cpp) | copy of the reference, adapted to the SSHash v6 API (marked `v6:`) |
-| `05`, `15` | [`src/sshash_v4_benchmark.cpp`](src/sshash_v4_benchmark.cpp) | copy of the reference, adapted to the SSHash v4 API (marked `v4:`) |
-| `04`, `14` | [`src/sshash_v3_benchmark.cpp`](src/sshash_v3_benchmark.cpp) | port to the SSHash v3 API (the 2022 API, as SSHash-Lite's), with access |
-| `01`, `11` | [`src/sshash_lite_benchmark.cpp`](src/sshash_lite_benchmark.cpp) | port: membership only, no access |
-| `03`, `13` | [`rust/src/main.rs`](rust/src/main.rs) | port: no access (sshash-rs has no id → k-mer access) |
+| `01`, `11` | [`src/sshash_v3_benchmark.cpp`](src/sshash_v3_benchmark.cpp) | port to the SSHash v3 API (the 2022 API, as SSHash-Lite's), with access |
+| `02`, `12` | [`src/sshash_lite_benchmark.cpp`](src/sshash_lite_benchmark.cpp) | port: membership only, no access |
+| `03`, `13` | [`src/sshash_v4_benchmark.cpp`](src/sshash_v4_benchmark.cpp) | copy of the reference, adapted to the SSHash v4 API (marked `v4:`) |
+| `04`, `14` | [`src/sshash_benchmark.cpp`](src/sshash_benchmark.cpp) | copy of the reference, adapted to the SSHash v6 API (marked `v6:`) |
+| `05`, `15` | [`rust/src/main.rs`](rust/src/main.rs) | port: no access (sshash-rs has no id → k-mer access) |
 
 The reference harness on `main` does not compile against current SSHash (v6 removed
 `dictionary::canonical()` and the canonical/regular `streaming_query` variants, and renamed
@@ -79,10 +79,10 @@ diff -u ../00_kmer_sets_benchmark/src/sshash_benchmark.cpp src/sshash_v4_benchma
 Only the SSHash harness of `00_kmer_sets_benchmark` is used; its nested submodules (SBWT, FMSI,
 its own SSHash) are not needed and need not be initialized.
 
-**Shared queries.** The `02` harness samples positive queries through `access` and writes them to
-`queries.txt`. `run.sh` takes this file from `02` on unitigs and passes it (`-p`) to the
-SSHash-Lite and Rust harnesses, which cannot sample by id. The tools with k-mer ids (`02`/`12`,
-`04`/`14`, `05`/`15`) resample from the same distribution on every run. Streaming workloads are identical for all tools. As a correctness
+**Shared queries.** The `04` harness samples positive queries through `access` and writes them to
+`queries.txt`. `run.sh` takes this file from `04` on unitigs and passes it (`-p`) to the
+SSHash-Lite and Rust harnesses, which cannot sample by id. The tools with k-mer ids (`04`/`14`,
+`01`/`11`, `03`/`13`) resample from the same distribution on every run. Streaming workloads are identical for all tools. As a correctness
 check, `make_table.py` verifies that every index reports the same number of positive k-mers on
 every streaming workload.
 
@@ -92,25 +92,25 @@ every streaming workload.
   from their submodule sources with identical flags (`-O3`, `-march=native` / `-mcpu=native`,
   C++20 for SSHash-Lite, C++17 for SSHash). Their own build systems are not used. Rust tools and
   harnesses are built with `-C target-cpu=native` and the `release` profile of sshash-rs.
-- **`01` is built with the PTHash stabilization of `11`.** `11` makes PTHash single-threaded with a
+- **`02` is built with the PTHash stabilization of `12`.** `12` makes PTHash single-threaded with a
   fixed seed (commits `59fb520`, `1bbe68f`), because the parallel path is unreliable on macOS/ARM.
-  Unpatched `01` peaks at >4.5 GB and gets killed even on E. coli. CMake builds `01` from a copy
-  patched with [`patches/01-pthash-stabilization.patch`](patches/01-pthash-stabilization.patch)
-  (the submodule is untouched), so `01` and `11` differ only in the masked-superstring feature.
-  To build pristine `01`, pass `-DBENCH_STABILIZE_01=OFF`.
-- **`04` is built from a patched copy too**, for the same reason: SSHash v3.0.0 does not compile
+  Unpatched `02` peaks at >4.5 GB and gets killed even on E. coli. CMake builds `02` from a copy
+  patched with [`patches/pthash-stabilization.patch`](patches/pthash-stabilization.patch)
+  (the submodule is untouched), so `02` and `12` differ only in the masked-superstring feature.
+  To build pristine `02`, pass `-DBENCH_STABILIZE_LITE=OFF`.
+- **`01` is built from a patched copy too**, for the same reason: SSHash v3.0.0 does not compile
   on ARM (its PTHash uses x86 intrinsics unconditionally) and its PTHash construction fails on
-  macOS. CMake applies [`patches/04-pthash-portability.patch`](patches/04-pthash-portability.patch)
-  (PTHash's own non-x86 fallbacks, `e12ce2f..5da0377`, the PTHash commit `01` pins) and the
-  stabilization patch of `01`, which applies verbatim since v3 and SSHash-Lite share this code.
-  `14` carries the same changes, so `04` and `14` differ only in the masked-superstring feature.
+  macOS. CMake applies [`patches/pthash-portability.patch`](patches/pthash-portability.patch)
+  (PTHash's own non-x86 fallbacks, `e12ce2f..5da0377`, the PTHash commit `02` pins) and the
+  stabilization patch of `02`, which applies verbatim since v3 and SSHash-Lite share this code.
+  `11` carries the same changes, so `01` and `11` differ only in the masked-superstring feature.
   v3 can fail to build with *"Empty bucket detected: try a different choice of l or change
   seed"* (an upstream limitation of its skew index, on SPSS inputs too); `run.sh` then stops.
 - **Build time.** Build times are reported, but construction is not the focus. SSHash-Lite and
-  SSHash v3 PTHash is single-threaded (see above), while `02`/`12`/`03`/`13` use `THREADS` and
-  `05`/`15` the largest power of 2 ≤ `THREADS` (a v4 requirement).
-- **Access time.** For masked superstrings, `14`/`15` map ids to intervals with a successor query
-  on the cumulative k-mer counts, while `04`/`05` (and `14`/`15` on SPSS input) use upstream's
+  SSHash v3 PTHash is single-threaded (see above), while `04`/`14`/`05`/`15` use `THREADS` and
+  `03`/`13` the largest power of 2 ≤ `THREADS` (a v4 requirement).
+- **Access time.** For masked superstrings, `11`/`13` map ids to intervals with a successor query
+  on the cumulative k-mer counts, while `01`/`03` (and `11`/`13` on SPSS input) use upstream's
   binary search over the string endpoints. The large access speedups of the `ms` rows come from
   this, not from the input.
 - **Platform.** Report numbers from Linux x86-64 and use macOS for development. Small datasets
@@ -122,7 +122,7 @@ every streaming workload.
 datasets.tsv        name, k, m, genomes (comma-separated), high-/low-hit read sets, num_queries
 scripts/            build.sh, prepare_data.sh, run.sh, make_table.py, helpers
 src/, rust/         harnesses
-patches/            build-time patches of 01 and 04 (see above)
+patches/            build-time patches of 01 and 02 (see above)
 data/               generated inputs and queries (ignored)
 results/<name>/k<k>/  builds.tsv, raw.jsonl, table.md (committed); indexes, logs (ignored)
 ```
@@ -134,8 +134,8 @@ results/<name>/k<k>/  builds.tsv, raw.jsonl, table.md (committed); indexes, logs
   masked superstring of the unitigs (`kmercamel compute`, min-one mask). It checks that all three
   represent the same number of k-mers.
 - **Development datasets.** `ecoli1` and `salmonella_enterica` (single genomes, about 4.8M
-  31-mers, from `02_sshash/data`). Their read sets are the 10K-read FASTQs in
-  `01_sshash-lite/data/queries`:
+  31-mers, from `04_sshash-v6/data`). Their read sets are the 10K-read FASTQs in
+  `02_sshash-lite/data/queries`:
 
   | Dataset | High-hit set | Low-hit set |
   |---|---|---|
@@ -157,7 +157,7 @@ results/<name>/k<k>/  builds.tsv, raw.jsonl, table.md (committed); indexes, logs
   masked superstring. Subsampling leaves an extremely fragmented set, the opposite extreme of
   the single genomes. Read sets are those of `ecoli1`: 9% of k-mers are found in the high-hit
   set and 0.3% in the low-hit set. Preparation takes about 13 min on a laptop, mostly
-  KmerCamel, which is single-threaded and peaks at 2.2 GB. The 15 builds of `01`–`03` and `11`–`13` take about 8.5 min.
+  KmerCamel, which is single-threaded and peaks at 2.2 GB. The 25 builds take about 12 min.
 - Larger datasets and other values of k are added as rows of `datasets.tsv`. Genomes may be
   `.xz`: GGCAT cannot read xz and picks the format from the file extension, so
   `prepare_data.sh` streams xz files through named FIFOs ending in `.fa`.

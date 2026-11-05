@@ -1,5 +1,5 @@
 //! Rust port of the reference harness 00_kmer_sets_benchmark/src/sshash_benchmark.cpp for
-//! 03_sshash-rs / 13_sshash-rs-bigreedy-ms: same loops, constants and output keys.
+//! 05_sshash-rs / 15_sshash-rs-bigreedy-ms: same loops, constants and output keys.
 //!
 //! Differences, forced by the sshash-rs API:
 //! - sshash-rs has no `access(kmer_id) -> k-mer`, hence no access benchmark, and positive

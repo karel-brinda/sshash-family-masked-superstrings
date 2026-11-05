@@ -1,33 +1,33 @@
-[submodule "01_sshash-lite"]
-	path = 01_sshash-lite
-	url = https://github.com/jermp/sshash-lite
-[submodule "02_sshash"]
-	path = 02_sshash
-	url = https://github.com/jermp/sshash
-[submodule "03_sshash-rs"]
-	path = 03_sshash-rs
-	url = https://github.com/COMBINE-lab/sshash-rs
-[submodule "11_sshash-lite-bigreedy-ms"]
-	path = 11_sshash-lite-bigreedy-ms
-	url = https://github.com/karel-brinda/sshash-lite-bigreedy-ms
-[submodule "12_sshash-bigreedy-ms"]
-	path = 12_sshash-bigreedy-ms
-	url = https://github.com/karel-brinda/sshash-bigreedy-ms
-[submodule "13_sshash-rs-bigreedy-ms"]
-	path = 13_sshash-rs-bigreedy-ms
-	url = https://github.com/karel-brinda/sshash-rs-bigreedy-ms
 [submodule "00_kmer_sets_benchmark"]
 	path = 00_kmer_sets_benchmark
 	url = https://github.com/jermp/kmer_sets_benchmark
-[submodule "04_sshash-v3"]
-	path = 04_sshash-v3
+[submodule "01_sshash-v3"]
+	path = 01_sshash-v3
 	url = https://github.com/jermp/sshash
-[submodule "05_sshash-v4"]
-	path = 05_sshash-v4
+[submodule "02_sshash-lite"]
+	path = 02_sshash-lite
+	url = https://github.com/jermp/sshash-lite
+[submodule "03_sshash-v4"]
+	path = 03_sshash-v4
 	url = https://github.com/jermp/sshash
-[submodule "14_sshash-v3-bigreedy-ms"]
-	path = 14_sshash-v3-bigreedy-ms
+[submodule "04_sshash-v6"]
+	path = 04_sshash-v6
+	url = https://github.com/jermp/sshash
+[submodule "05_sshash-rs"]
+	path = 05_sshash-rs
+	url = https://github.com/COMBINE-lab/sshash-rs
+[submodule "11_sshash-v3-bigreedy-ms"]
+	path = 11_sshash-v3-bigreedy-ms
 	url = https://github.com/karel-brinda/sshash-bigreedy-ms
-[submodule "15_sshash-v4-bigreedy-ms"]
-	path = 15_sshash-v4-bigreedy-ms
+[submodule "12_sshash-lite-bigreedy-ms"]
+	path = 12_sshash-lite-bigreedy-ms
+	url = https://github.com/karel-brinda/sshash-lite-bigreedy-ms
+[submodule "13_sshash-v4-bigreedy-ms"]
+	path = 13_sshash-v4-bigreedy-ms
 	url = https://github.com/karel-brinda/sshash-bigreedy-ms
+[submodule "14_sshash-v6-bigreedy-ms"]
+	path = 14_sshash-v6-bigreedy-ms
+	url = https://github.com/karel-brinda/sshash-bigreedy-ms
+[submodule "15_sshash-rs-bigreedy-ms"]
+	path = 15_sshash-rs-bigreedy-ms
+	url = https://github.com/karel-brinda/sshash-rs-bigreedy-ms

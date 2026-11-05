@@ -1,5 +1,6 @@
-# PTHash stabilization of 11_sshash-lite-bigreedy-ms (commits 59fb520, 1bbe68f), applied to a
-# build-time copy of 01_sshash-lite so that 01 and 11 are constructed identically (see README).
+# PTHash stabilization of 12_sshash-lite-bigreedy-ms (commits 59fb520, 1bbe68f), applied to
+# build-time copies of 02_sshash-lite and 01_sshash-v3 (which share this code), so that each
+# original and its modification are constructed identically (see README).
 diff --git a/include/minimizers.hpp b/include/minimizers.hpp
 index 9079031..ced84ef 100644
 --- a/include/minimizers.hpp

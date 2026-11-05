@@ -1,5 +1,5 @@
 /*
-    SSHash v3 (04_sshash-v3 / 14_sshash-v3-bigreedy-ms) port of the reference harness
+    SSHash v3 (01_sshash-v3 / 11_sshash-v3-bigreedy-ms) port of the reference harness
     00_kmer_sets_benchmark/src/sshash_benchmark.cpp: same loops, constants, timers and output keys.
     v3 has k-mer ids, so, as in the reference, positive queries are sampled through access() and
     the access benchmark is run.

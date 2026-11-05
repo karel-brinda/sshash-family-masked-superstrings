@@ -1,0 +1,21 @@
+# Rust port of the reference harness, linked against 15_sshash-rs-bigreedy-ms (see ../src/main.rs).
+[package]
+name = "bench-15"
+version = "0.1.0"
+edition = "2024"
+publish = false
+
+[[bin]]
+name = "bench-15"
+path = "../src/main.rs"
+
+[dependencies]
+sshash-lib = { path = "../../../15_sshash-rs-bigreedy-ms/crates/sshash-lib" }
+flate2 = "1"
+
+# Same as the release profile of 15_sshash-rs-bigreedy-ms.
+[profile.release]
+lto = "thin"
+
+# Standalone: not part of the 15_sshash-rs-bigreedy-ms workspace.
+[workspace]
