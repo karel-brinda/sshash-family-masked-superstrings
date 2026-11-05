@@ -7,26 +7,30 @@ Supplementary repository for a paper. It pins the SSHash-family tools and their 
 | Dir | Repo | Role | Branch | Upstream |
 |---|---|---|---|---|
 | `01_sshash-lite` | jermp/sshash-lite | original | `main` | – |
-| `02_sshash` | jermp/sshash | original | `master` | – |
+| `02_sshash` | jermp/sshash (v6) | original | `master` | – |
 | `03_sshash-rs` | COMBINE-lab/sshash-rs | original | `main` | – |
+| `04_sshash-v3` | jermp/sshash @ `v3.0.0` (2022) | original | tag | – |
+| `05_sshash-v4` | jermp/sshash @ `v4.0.0` (2025) | original | tag | – |
 | `11_sshash-lite-bigreedy-ms` | karel-brinda/sshash-lite-bigreedy-ms | modified | `main` | `01` (jermp/sshash-lite `main`) |
 | `12_sshash-bigreedy-ms` | karel-brinda/sshash-bigreedy-ms | modified | `master` | `02` (jermp/sshash `master`) |
 | `13_sshash-rs-bigreedy-ms` | karel-brinda/sshash-rs-bigreedy-ms | modified | `main` | `03` (COMBINE-lab/sshash-rs `main`) |
+| `14_sshash-v3-bigreedy-ms` | karel-brinda/sshash-bigreedy-ms | modified | `v3-ms` | `04` (jermp/sshash `v3.0.0`) |
+| `15_sshash-v4-bigreedy-ms` | karel-brinda/sshash-bigreedy-ms | modified | `v4-ms` | `05` (jermp/sshash `v4.0.0`) |
 
 | `00_kmer_sets_benchmark` | jermp/kmer_sets_benchmark | reference benchmark | `main` | – |
 | `30_benchmark_membership` | (this repo) | membership benchmark of `0x` vs `1x` | – | – |
 
-Numbering: `0x` = original, `1x` = modification of `0x`. The pinned `0x` commit should be the fork point (merge base) of the corresponding `1x`. `00` is the reference benchmark (only its `src/sshash_benchmark.cpp` and `src/common.hpp` are used; its nested submodules are not needed); `3x` are benchmarks in this repo. See `30_benchmark_membership/README.md`, in particular: the SSHash harness there is a v6-adapted copy of `00`'s (diff it after bumping `00`), and `01` is built from a copy patched with `11`'s PTHash stabilization.
+Numbering: `0x` = original, `1x` = modification of `0x`. The pinned `0x` commit should be the fork point (merge base) of the corresponding `1x`. `00` is the reference benchmark (only its `src/sshash_benchmark.cpp` and `src/common.hpp` are used; its nested submodules are not needed); `3x` are benchmarks in this repo. SSHash is pinned in three versions because the masked-superstring gain depends on the index design: `04`/`14` (v3, the 2022 design of the Bioinformatics paper), `05`/`15` (v4, first version with minimizer-position offsets) and `02`/`12` (v6, current). `04`/`05` are pinned to release tags and never bumped; `14`/`15` are branches of the same fork as `12`. See `30_benchmark_membership/README.md`, in particular: the SSHash harnesses there are v6- and v4-adapted copies of `00`'s and a v3 port (diff them after bumping `00`), and `01` and `04` are built from copies patched with `11`'s PTHash stabilization (`04` also with PTHash's non-x86 fallbacks).
 
 ## Rules
 
 - Submodules are pinned to **exact commits**. `.gitmodules` has no `branch =` entries, so do not rely on `git submodule update --remote`.
-- Never modify `00`–`03`. They only move when deliberately bumped to a new upstream commit.
-- Make code changes only inside `11`–`13`: commit and push in the submodule first, then commit the updated pointer in this repo. Never commit a pointer to a commit that hasn't been pushed.
+- Never modify `00`–`05`. They only move when deliberately bumped to a new upstream commit (`04`/`05` not at all: they are the historical versions).
+- Make code changes only inside `11`–`15`: commit and push in the submodule first, then commit the updated pointer in this repo. Never commit a pointer to a commit that hasn't been pushed.
 - `.gitmodules` uses public HTTPS URLs (for readers of the paper). For pushing, set a local SSH push URL in each `1x` (not committed):
   `git -C 1x_... remote set-url --push origin git@github.com:karel-brinda/<repo>.git`
 - Each `1x` has a local `upstream` remote pointing to its original repo, plus `git config checkout.defaultRemote origin` (both remotes have the same branch names, so `git switch main` is otherwise ambiguous).
-- A submodule checkout is a detached HEAD. Run `git switch <branch>` before committing in it.
+- A submodule checkout is a detached HEAD. Run `git switch <branch>` before committing in it (`v3-ms` in `14`, `v4-ms` in `15`: `12`, `14` and `15` are three checkouts of one repository).
 - Commit and push only when explicitly asked.
 
 ## Common operations
@@ -248,3 +252,61 @@ Gotchas and facts worth knowing:
   absolute offsets — report component breakdowns, not just totals.
 - `m` must be ≤ 31; `ceil_log2(num_strings) + ceil_log2(max_interval_len - m + 1)` must be
   ≤ 64 (asserted at SPSS construction).
+
+### 14_sshash-v3-bigreedy-ms
+
+Branch `v3-ms` of karel-brinda/sshash-bigreedy-ms, forked at SSHash `v3.0.0` (= pinned `04`).
+The 2022 code base is the one SSHash-Lite was cut from (`buckets.hpp` nearly identical), so this
+is `11`'s design plus k-mer ids, not a port of `12`. Reference diff: `git diff v3.0.0..v3-ms`.
+
+- Build fixes first (same as `04`'s build-time patches in `30`): PTHash submodule at `5da0377`
+  (non-x86 fallbacks), `01`'s PTHash stabilization, C++20, ARM flags in `CMakeLists.txt`.
+- Layout (`include/buckets.hpp`, comment at the top): v3's `pieces` = `[0, e_0, …]` now holds the
+  interval **ends**; one extra `ef_sequence<true> cum` (cumulative k-mer counts) exists **only
+  for masked-superstring input**. Empty `cum` ⇒ upstream v3 code path, byte-identical index up to
+  ~120 bytes, so `14` on SPSS = `04`. Interval begin = `e_i − (k−1) − (c_{i+1} − c_i)` (no begins
+  array); id = `c_i + (offset − b_i)`; interval of a super-k-mer = `pieces.next_geq(offset + k)`
+  (`11`'s lemma); id → offset via `cum.prev_leq(id)`. Offsets stay absolute super-k-mer starts:
+  no encoding is needed because starts of different intervals never coincide.
+- Parser: `parse_masked_superstring()` in `include/builder/parse_file.hpp` (= `11`'s
+  `parse_bigreedy_intervals`), `include/builder/masked_superstring.hpp` (= `11`'s
+  `bigreedy_ms.hpp`). `src/build.cpp`: `--masked-superstring`; `--weighted` rejected.
+- Also MS-aware: `contig_length(contig_id, k)` (signature gained `k`), `contig_prefix`, the k-mer
+  iterator (restarts at the next interval's begin, since intervals may overlap). Streaming
+  queries needed no change.
+- `--check` on MS (`src/check_utils.hpp`): ids = ranks of uppercase positions (the min-one
+  detector, exits 1), `lookup_advanced` fields, access, **every non-represented position** found
+  iff its k-mer is represented elsewhere (sorted array of canonical k-mers, 8 B/k-mer), random
+  negatives, contig navigation, iterator.
+- Validated (2026-11): `--check` on ecoli1 and on a 3 Mbp prefix of the pangenome masked
+  superstring (312k intervals for 348k k-mers), regular and canonical parsing, m = 15 and 9
+  (skew index); Debug builds (streaming-vs-point asserts) on junction-crossing reads; identical
+  streaming counts to `04` on the SPSS of the same set; a duplicated k-mer is caught.
+- Upstream v3 gotcha: construction can abort with *"Empty bucket detected"* (skew-index
+  partition with no bucket); seed-dependent and reproduced with `04` on SPSS. Use another `-s`.
+
+### 15_sshash-v4-bigreedy-ms
+
+Branch `v4-ms` of karel-brinda/sshash-bigreedy-ms, forked at SSHash `v4.0.0` (= pinned `05`).
+Same layout and invariants as `14` (`cum` = `bits::elias_fano<true, true>` over interval sizes,
+so `diff(i)` gives the size with one select), adapted to v4's minimizer-position offsets.
+Reference diff: `git diff v4.0.0..v4-ms`.
+
+- **No encoded offsets, unlike `12`.** v4 keeps every super-k-mer tuple (with its own
+  `pos_in_kmer` and size); positions are deduplicated only when writing `offsets`, and the skew
+  index maps every tuple's k-mers to the shared slot. A lookup derives the k-mer offset from the
+  query (`pos_in_seq − pos_in_kmer`), so a minimizer position shared by two overlapping
+  intervals is harmless: `offset_to_id_masked_superstring` takes the interval with the smallest
+  end ≥ offset + k and returns invalid if `offset < begin` (a junction occurrence). Tuple merging
+  at parse time requires equal `pos_in_kmer`, hence equal super-k-mer starts, which never
+  coincide across intervals. (v6 asserts one tuple per minimizer position at merge, which is
+  presumably why `12` needed encoding.)
+- SPSS-only formulas that had to be routed through `buckets`: `lookup_result::contig_begin/end`
+  (now `is_kmer_at`), the streaming `seed()` offset (`buckets::kmer_offset`),
+  `dictionary::at_contig_id` and the contig-iterator check (`contig_first_kmer_id`),
+  `contig_offsets(contig_id, k)`. `compute_statistics` throws on MS.
+- Parser: MS branch inside `parse_file<kmer_t, fmt>` (`encode_masked_superstring`, char by char:
+  the x86 bulk encoder is not used for lowercase); the threaded tuple pass reads interval begins
+  from `parse_data::interval_begins`. `tools/build.cpp`: `--masked-superstring`; `--check` as in
+  `14` (`test/check_from_file.hpp`).
+- Validated as `14` (same inputs and checks, `-t 4`), plus `-t 8` on ecoli1.
