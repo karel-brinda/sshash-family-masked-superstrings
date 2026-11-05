@@ -15,8 +15,10 @@ from collections import defaultdict
 from pathlib import Path
 
 out = Path(sys.argv[1])
-NAMES = {"01": "sshash-lite", "02": "sshash", "03": "sshash-rs",
-         "11": "sshash-lite-bigreedy-ms", "12": "sshash-bigreedy-ms", "13": "sshash-rs-bigreedy-ms"}
+NAMES = {"01": "sshash-lite", "02": "sshash (v6)", "03": "sshash-rs", "04": "sshash-v3",
+         "05": "sshash-v4", "11": "sshash-lite-bigreedy-ms", "12": "sshash-bigreedy-ms (v6)",
+         "13": "sshash-rs-bigreedy-ms", "14": "sshash-v3-bigreedy-ms",
+         "15": "sshash-v4-bigreedy-ms"}
 WORKLOADS = ["high", "low", "mixed"]
 
 with open(out / "num_kmers.tsv") as f:
@@ -73,7 +75,7 @@ print(f"{out.parent.name}, k={out.name[1:]}, {num_kmers:,} k-mers; medians of "
       f"{len(samples[next(iter(samples))])} runs; Δ = change vs the 0x original\n")
 print("| " + " | ".join(HEADER) + " |")
 print("|" + "---|" * len(HEADER))
-for orig in ["01", "02", "03"]:
+for orig in ["01", "04", "05", "02", "03"]:  # SSHash versions in chronological order
     mod = str(int(orig) + 10).zfill(2)
     for tool, inp in [(orig, "unitigs"), (mod, "unitigs"), (orig, "simplitigs"), (mod, "simplitigs"),
                       (mod, "ms")]:

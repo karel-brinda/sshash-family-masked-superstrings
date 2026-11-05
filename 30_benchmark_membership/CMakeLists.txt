@@ -4,10 +4,14 @@ project(BENCHMARK_MEMBERSHIP LANGUAGES CXX)
 # Every tool of the SSHash family is compiled here from its submodule sources with the same
 # compiler and flags, so that 0x vs 1x differences reflect code, not build settings.
 #
-#   sshash-lite-01, sshash-lite-11   build/query CLIs of 01_sshash-lite / 11_sshash-lite-bigreedy-ms
-#   sshash-02, sshash-12             build/query CLIs of 02_sshash / 12_sshash-bigreedy-ms
-#   bench-01, bench-11               src/sshash_lite_benchmark.cpp (port of the reference harness)
-#   bench-02, bench-12               00_kmer_sets_benchmark/src/sshash_benchmark.cpp, unchanged
+#   sshash-lite-01, sshash-lite-11     build/query CLIs of 01_sshash-lite / 11_sshash-lite-bigreedy-ms
+#   sshash-02, sshash-12               CLI of 02_sshash / 12_sshash-bigreedy-ms (SSHash v6)
+#   sshash-04-*, sshash-14-*           build/query CLIs of 04_sshash-v3 / 14_sshash-v3-bigreedy-ms
+#   sshash-05, sshash-15               CLI of 05_sshash-v4 / 15_sshash-v4-bigreedy-ms
+#   bench-01, bench-11                 src/sshash_lite_benchmark.cpp (port of the reference harness)
+#   bench-02, bench-12                 src/sshash_benchmark.cpp (reference harness, v6 API)
+#   bench-04, bench-14                 src/sshash_v3_benchmark.cpp (port of the reference harness)
+#   bench-05, bench-15                 src/sshash_v4_benchmark.cpp (reference harness, v4 API)
 #
 # The Rust tools (03, 13) are built by rust/ (see README.md).
 
@@ -30,9 +34,11 @@ find_package(ZLIB REQUIRED)
 set(ROOT ${CMAKE_CURRENT_SOURCE_DIR}/..)
 set(REF ${ROOT}/00_kmer_sets_benchmark)
 
-# --- SSHash (02, 12) ---------------------------------------------------------------------------
+# --- SSHash v6 (02, 12) and v4 (05, 15) -------------------------------------------------------
 
-function(add_sshash id dir)
+# add_sshash(<id> <dir> <harness> <library sources...>): the two versions differ only in their
+# source layout and in the API adaptations of their harness.
+function(add_sshash id dir harness)
     set(src ${ROOT}/${dir})
     set(includes
         ${src}/include
@@ -44,13 +50,8 @@ function(add_sshash id dir)
         ${src}/external/pthash/external/xxHash
         ${src}/external/pthash/external/mm_file/include)
 
-    add_library(sshash_static_${id} STATIC
-        ${src}/external/gz/zip_stream.cpp
-        ${src}/external/cityhash/cityhash.cpp
-        ${src}/src/builder/build.cpp
-        ${src}/src/dictionary.cpp
-        ${src}/src/query.cpp
-        ${src}/src/info.cpp)
+    list(TRANSFORM ARGN PREPEND ${src}/ OUTPUT_VARIABLE sources)
+    add_library(sshash_static_${id} STATIC ${sources})
     target_include_directories(sshash_static_${id} PUBLIC ${includes})
     target_compile_features(sshash_static_${id} PUBLIC cxx_std_17)
     target_link_libraries(sshash_static_${id} PUBLIC ZLIB::ZLIB)
@@ -58,18 +59,78 @@ function(add_sshash id dir)
     add_executable(sshash-${id} ${src}/tools/sshash.cpp)
     target_link_libraries(sshash-${id} PRIVATE sshash_static_${id})
 
-    # The reference harness includes "sshash/...": expose this tree under that name.
+    # The harnesses include "sshash/...": expose this tree under that name.
     set(alias ${CMAKE_BINARY_DIR}/alias_${id})
     file(MAKE_DIRECTORY ${alias})
     file(CREATE_LINK ${src} ${alias}/sshash SYMBOLIC)
 
-    add_executable(bench-${id} src/sshash_benchmark.cpp)
+    add_executable(bench-${id} ${harness})
     target_include_directories(bench-${id} PRIVATE ${alias} ${REF})
     target_link_libraries(bench-${id} PRIVATE sshash_static_${id})
 endfunction()
 
-add_sshash(02 02_sshash)
-add_sshash(12 12_sshash-bigreedy-ms)
+set(SOURCES_V6 external/gz/zip_stream.cpp external/cityhash/cityhash.cpp src/builder/build.cpp
+               src/dictionary.cpp src/query.cpp src/info.cpp)
+set(SOURCES_V4 external/gz/zip_stream.cpp src/build.cpp src/dictionary.cpp src/query.cpp
+               src/info.cpp src/statistics.cpp)
+add_sshash(02 02_sshash src/sshash_benchmark.cpp ${SOURCES_V6})
+add_sshash(12 12_sshash-bigreedy-ms src/sshash_benchmark.cpp ${SOURCES_V6})
+add_sshash(05 05_sshash-v4 src/sshash_v4_benchmark.cpp ${SOURCES_V4})
+add_sshash(15 15_sshash-v4-bigreedy-ms src/sshash_v4_benchmark.cpp ${SOURCES_V4})
+
+# --- SSHash v3 (04, 14) ------------------------------------------------------------------------
+
+# v3.0.0 (2022) needs two fixes to build and run on macOS/ARM, carried as commits by 14 and applied
+# here to a build-time copy of 04 (the submodule is untouched), so that 04 and 14 differ only in
+# the masked-superstring feature:
+#   patches/04-pthash-portability.patch   PTHash e12ce2f..5da0377 (non-x86 fallbacks)
+#   patches/01-pthash-stabilization.patch the PTHash stabilization of 01/11 (v3 and SSHash-Lite
+#                                         share this code; the patch applies verbatim)
+# and C++20 (std::popcount in the PTHash fallbacks, as for SSHash-Lite).
+set(SRC04 ${CMAKE_BINARY_DIR}/04_sshash-v3-patched)
+set(PATCHES04 ${CMAKE_CURRENT_SOURCE_DIR}/patches/04-pthash-portability.patch
+              ${CMAKE_CURRENT_SOURCE_DIR}/patches/01-pthash-stabilization.patch)
+set(stale04 FALSE)
+foreach (patch ${PATCHES04})
+    if (NOT EXISTS ${SRC04}/.patched OR ${patch} IS_NEWER_THAN ${SRC04}/.patched)
+        set(stale04 TRUE)
+    endif ()
+endforeach ()
+if (stale04)
+    file(REMOVE_RECURSE ${SRC04})
+    file(MAKE_DIRECTORY ${SRC04})
+    file(COPY ${ROOT}/04_sshash-v3/include ${ROOT}/04_sshash-v3/src ${ROOT}/04_sshash-v3/external
+         DESTINATION ${SRC04} PATTERN .git EXCLUDE)
+    foreach (patch ${PATCHES04})
+        execute_process(COMMAND patch -p1 -i ${patch} WORKING_DIRECTORY ${SRC04} RESULT_VARIABLE rc)
+        if (NOT rc EQUAL 0)
+            message(FATAL_ERROR "cannot apply ${patch}")
+        endif ()
+    endforeach ()
+    file(TOUCH ${SRC04}/.patched)
+endif ()
+
+function(add_sshash_v3 id src)
+    add_library(sshash_static_${id} STATIC
+        ${src}/include/gz/zip_stream.cpp
+        ${src}/include/dictionary.cpp
+        ${src}/include/info.cpp
+        ${src}/include/builder/build.cpp)
+    target_compile_features(sshash_static_${id} PUBLIC cxx_std_20)
+    target_link_libraries(sshash_static_${id} PUBLIC ZLIB::ZLIB)
+
+    foreach (cli build query)
+        add_executable(sshash-${id}-${cli} ${src}/src/${cli}.cpp)
+        target_link_libraries(sshash-${id}-${cli} PRIVATE sshash_static_${id})
+    endforeach ()
+
+    add_executable(bench-${id} src/sshash_v3_benchmark.cpp)
+    target_include_directories(bench-${id} PRIVATE ${src})
+    target_link_libraries(bench-${id} PRIVATE sshash_static_${id})
+endfunction()
+
+add_sshash_v3(04 ${SRC04})
+add_sshash_v3(14 ${ROOT}/14_sshash-v3-bigreedy-ms)
 
 # --- SSHash-Lite (01, 11) ----------------------------------------------------------------------
 

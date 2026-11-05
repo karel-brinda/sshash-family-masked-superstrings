@@ -19,3 +19,15 @@
 [submodule "00_kmer_sets_benchmark"]
 	path = 00_kmer_sets_benchmark
 	url = https://github.com/jermp/kmer_sets_benchmark
+[submodule "04_sshash-v3"]
+	path = 04_sshash-v3
+	url = https://github.com/jermp/sshash
+[submodule "05_sshash-v4"]
+	path = 05_sshash-v4
+	url = https://github.com/jermp/sshash
+[submodule "14_sshash-v3-bigreedy-ms"]
+	path = 14_sshash-v3-bigreedy-ms
+	url = https://github.com/karel-brinda/sshash-bigreedy-ms
+[submodule "15_sshash-v4-bigreedy-ms"]
+	path = 15_sshash-v4-bigreedy-ms
+	url = https://github.com/karel-brinda/sshash-bigreedy-ms
